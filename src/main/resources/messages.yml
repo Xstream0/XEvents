@@ -1,0 +1,131 @@
+# ============================================================================
+#  XEvents - messages.yml
+#  Plugin: XEvents | Autore: Xstream
+# ============================================================================
+
+prefix: "<gray>[<gold><b>XEvents</b></gold><gray>]</gray> "
+
+command:
+  unknown-subcommand: "<red>Comando non riconosciuto. Usa <yellow>/xevents help</yellow> per la lista comandi."
+  unknown-module: "<red>Nessun modulo trovato con id <yellow><id></yellow>."
+  no-permission: "<red>Non hai il permesso per usare questo comando."
+  players-only: "<red>Questo comando può essere usato solo da un giocatore in gioco."
+  another-event-active: "<red>C'è già un altro evento attivo. Fermalo prima di avviarne un altro."
+
+  help:
+    header: "<gold><b>== XEvents - Comandi ==</b></gold>"
+    list: "<yellow>/xevents list</yellow> <gray>- Elenca tutti gli eventi disponibili."
+    gui: "<yellow>/xevents gui</yellow> <gray>- Apri il pannello di gestione eventi."
+    start: "<yellow>/xevents start <id></yellow> <gray>- Avvia un evento."
+    stop: "<yellow>/xevents stop</yellow> <gray>- Ferma l'evento attivo in modo ordinato."
+    join: "<yellow>/xevents join</yellow> <gray>- Partecipa all'evento in corso."
+    leave: "<yellow>/xevents leave</yellow> <gray>- Abbandona l'evento in corso."
+    reload: "<yellow>/xevents reload</yellow> <gray>- Ricarica configurazione e messaggi."
+    setstart: "<yellow>/xevents setstart</yellow> <gray>- [Lucky Block Race] Imposta il punto di partenza."
+    setfinish: "<yellow>/xevents setfinish</yellow> <gray>- [Lucky Block Race] Imposta il punto di arrivo."
+    setlobby: "<yellow>/xevents setlobby</yellow> <gray>- [Lucky Block Race] Imposta la lobby d'attesa."
+
+  list:
+    empty: "<red>Nessun modulo evento registrato."
+    header: "<gold><b>== Eventi disponibili ==</b></gold>"
+    entry: "<gray> - <yellow><id></yellow>: <white><name></white> <gray>(<aqua><state></aqua><gray>)"
+
+  start:
+    usage: "<red>Uso corretto: <yellow>/xevents start <id_evento></yellow>"
+    not-ready: "<red>L'evento non è pronto per essere avviato:"
+    issue-line: "<red> • <issue>"
+    failed: "<red>Impossibile avviare l'evento."
+    success: "<green>Evento <white><name></white> avviato con successo!"
+
+  stop:
+    none-active: "<red>Nessun evento attivo al momento."
+    success: "<green>Evento fermato correttamente."
+
+  forcestop:
+    success: "<green>Evento interrotto forzatamente."
+
+  join:
+    none-active: "<red>Nessun evento attivo a cui partecipare al momento."
+
+  leave:
+    not-in-event: "<red>Non stai partecipando a nessun evento."
+    success: "<green>Hai abbandonato l'evento."
+
+  reload:
+    success: "<green>Configurazione e messaggi ricaricati con successo."
+
+  status:
+    none-active: "<gray>Nessun evento attivo al momento."
+    line: "<gray>Evento attivo: <white><name></white> <gray>- stato: <aqua><state></aqua>"
+    lanes-line: "<gray>Corsie attive: <white><lanes></white> <gray>- In coda d'attesa: <yellow><waiting></yellow>"
+
+gui:
+  title: "<dark_gray>XEvents <gray>- Pannello eventi"
+  close-item: "<red>Chiudi"
+  lore:
+    description: "<gray><description>"
+    state: "<gray>Stato: <aqua><state></aqua>"
+    ready: "<green>Pronto per essere avviato"
+    not-ready: "<red>Configurazione incompleta:"
+    issue: "<red>  - <issue>"
+    click-start: "<yellow>Click per avviare"
+    click-stop: "<yellow>Click per fermare"
+
+luckyblockrace:
+
+  setup:
+    missing-start: "Punto di partenza non impostato (usa /xevents setstart)."
+    missing-finish: "Punto di arrivo non impostato (usa /xevents setfinish)."
+    different-worlds: "Partenza e arrivo si trovano in mondi diversi."
+    no-outcomes: "Nessun esito configurato per i Lucky Block (controlla config.yml)."
+    already-running: "Una Lucky Block Race è già in corso."
+    start-set: "<green>Punto di partenza della Lucky Block Race impostato sulla tua posizione."
+    finish-set: "<green>Punto di arrivo della Lucky Block Race impostato sulla tua posizione."
+    lobby-set: "<green>Lobby d'attesa della Lucky Block Race impostata sulla tua posizione."
+
+  join:
+    not-open: "<red>Le iscrizioni alla Lucky Block Race non sono aperte in questo momento."
+    already-joined: "<red>Sei già iscritto alla Lucky Block Race."
+    broadcast: "<gold><player></gold> <gray>si è iscritto alla Lucky Block Race! <yellow>(<count> iscritti)"
+
+  leave:
+    broadcast: "<gold><player></gold> <gray>ha abbandonato la Lucky Block Race."
+
+  queue:
+    waiting: "<yellow>Tutte le corsie sono occupate: sei in coda d'attesa per la prossima gara."
+
+  race:
+    finish-blocked: "<red>Non puoi ancora considerarti arrivato: ti restano <white><remaining></white> Lucky Block da rompere sulla tua corsia!"
+
+  announce:
+    opened: "<gold><b>LUCKY BLOCK RACE</b></gold> <gray>avviata da <yellow><initiator></yellow>! Usa <yellow>/xevents join</yellow> per partecipare. Si parte tra <white><seconds>s</white>."
+    countdown-tick: "<gray>La corsa inizia tra <yellow><b><seconds></b></yellow> secondi..."
+    not-enough-players: "<red>Non ci sono abbastanza giocatori iscritti (minimo <white><min></white>). Evento annullato."
+    race-started-with-queue: "<gold><b>VIA!</b></gold> <gray>La Lucky Block Race è iniziata su <white><lanes></white> corsie! <yellow><waiting></yellow> giocatori sono in coda d'attesa per il prossimo turno."
+    race-started: "<gold><b>VIA!</b></gold> <gray>La Lucky Block Race è iniziata! Rompi i Lucky Block e corri verso il traguardo!"
+    time-up: "<red><b>Tempo scaduto!</b></red> <gray>La corsa si chiude con la classifica attuale."
+    player-finished: "<gold><player></gold> <gray>ha raggiunto il traguardo! <yellow>(posizione #<position>)"
+    stopped-by-staff: "<red>La Lucky Block Race è stata interrotta dallo staff."
+    finale-incoming: "<gold><b>Gran finale in arrivo!</b></gold> <gray>I finisher si affronteranno tra <white><seconds>s</white>!"
+    finale-started: "<gold><b>COMBATTIMENTO FINALE!</b></gold> <gray>Che vinca il migliore!"
+    winner: "<gold><b><player> ha vinto la Lucky Block Race!</b></gold>"
+    no-winner: "<gray>La Lucky Block Race è terminata senza un vincitore."
+
+  outcome:
+    diamond: "<aqua><player></aqua> <gray>ha trovato dei diamanti nel Lucky Block!"
+    iron: "<white><player></white> <gray>ha trovato del ferro nel Lucky Block!"
+    food: "<green><player></green> <gray>ha trovato del cibo nel Lucky Block!"
+    sword: "<yellow><player></yellow> <gray>ha trovato una spada nel Lucky Block!"
+    speed: "<green><player></green> <gray>ha ottenuto un boost di velocità!"
+    slowness: "<red><player></red> <gray>è stato rallentato!"
+    blindness: "<dark_red><player></dark_red> <gray>è stato accecato temporaneamente!"
+    tnt: "<red><b>TRAPPOLA!</b></red> <gray>Il Lucky Block di <player> era una TNT!"
+    lightning: "<gray>Un fulmine scenico è caduto vicino a <player>!"
+    mobs: "<dark_green>Un'orda di zombie è apparsa vicino a <player>!</dark_green>"
+    teleport-forward: "<green><player></green> <gray>è stato catapultato avanti lungo il percorso!"
+    teleport-back: "<red><player></red> <gray>è stato risucchiato indietro lungo il percorso!"
+    nothing: "<gray>...e non è successo nulla. Che fortuna (o sfortuna), <player>."
+
+  leaderboard:
+    header: "<gold><b>== Classifica Lucky Block Race ==</b></gold>"
+    line: "<yellow>#<position></yellow> <white><player></white> <gray>- <aqua><time>s</aqua> <gray>(<blocks> blocchi rotti)"

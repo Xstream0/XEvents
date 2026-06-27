@@ -1,0 +1,20 @@
+name: XEvents
+version: '${version}'
+main: net.xstream.xevents.XEvents
+api-version: '1.21'
+author: Xstream
+description: Sistema modulare di eventi (minigame a tempo) avviabili dallo staff.
+
+commands:
+  xevents:
+    description: Comando principale per la gestione degli eventi XEvents.
+    usage: /xevents
+    aliases: [xev, event, events]
+
+permissions:
+  xevents.admin:
+    description: Permette di gestire e avviare gli eventi.
+    default: op
+  xevents.join:
+    description: Permette di partecipare agli eventi.
+    default: true
