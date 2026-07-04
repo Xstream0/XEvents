@@ -10,7 +10,6 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-
 public final class RaceListener implements Listener {
 
     private final LuckyBlockRaceModule module;
@@ -27,21 +26,17 @@ public final class RaceListener implements Listener {
         }
         var lane = module.getLaneOf(player);
         if (lane != null && lane.getPlacer().isTrackedLuckyBlock(event.getBlock())) {
-            
             event.setDropItems(false);
             event.setExpToDrop(0);
             module.handleLuckyBlockBroken(player, event.getBlock());
             return;
         }
-        
-        
-        
         if (module.isLuckyBlockOfAnotherLane(player, event.getBlock())) {
             event.setCancelled(true);
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerMove(PlayerMoveEvent event) {
         if (event.getTo() == null) {
             return;
@@ -61,13 +56,11 @@ public final class RaceListener implements Listener {
         }
     }
 
-    
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (!(event.getEntity() instanceof Player victim)) {
-            return;
-        }
-        if (!module.isParticipant(victim)) {
+        boolean victimIsParticipant = event.getEntity() instanceof Player victim && module.isParticipant(victim);
+        boolean attackerIsParticipant = event.getDamager() instanceof Player attacker && module.isParticipant(attacker);
+        if (!victimIsParticipant && !attackerIsParticipant) {
             return;
         }
         if (module.getPhase() == RacePhase.RACING || module.getPhase() == RacePhase.COUNTDOWN
@@ -76,7 +69,6 @@ public final class RaceListener implements Listener {
         }
     }
 
-    
     @EventHandler(priority = EventPriority.HIGH)
     public void onEntityDamage(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) {

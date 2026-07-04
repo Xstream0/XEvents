@@ -19,7 +19,7 @@ public final class LuckyBlockPlacer {
     }
 
     public int placeAlongPath(@NotNull Location start, @NotNull Location finish, double intervalBlocks, double offsetBlocks) {
-        placedBlocks.clear(); // sicurezza: non lasciare residui da una run precedente non ripulita
+        placedBlocks.clear();
 
         if (start.getWorld() == null || finish.getWorld() == null || !start.getWorld().equals(finish.getWorld())) {
             return 0;

@@ -21,6 +21,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +57,8 @@ public final class LuckyBlockRaceModule implements XEventModule {
 
     private long raceStartMillis = -1;
     private BukkitTask activeTask;
+    private BukkitTask maxDurationTask;
+    private BukkitTask startItemWatcherTask;
     private int finishedCount = 0;
 
     @Override
@@ -209,7 +212,9 @@ public final class LuckyBlockRaceModule implements XEventModule {
             messages.send(player, "luckyblockrace.join.already-joined");
             return false;
         }
-        participants.put(player.getUniqueId(), new RaceParticipant(player.getUniqueId(), player.getName()));
+        RaceParticipant participant = new RaceParticipant(player.getUniqueId(), player.getName());
+        participant.setSnapshot(takeSnapshot(player));
+        participants.put(player.getUniqueId(), participant);
 
         Location lobby = arena.getWaitingLobby() != null ? arena.getWaitingLobby() : arena.getStart();
         if (lobby != null) {
@@ -224,6 +229,28 @@ public final class LuckyBlockRaceModule implements XEventModule {
         return true;
     }
 
+    @NotNull
+    private RaceParticipant.PlayerSnapshot takeSnapshot(@NotNull Player player) {
+        return new RaceParticipant.PlayerSnapshot(
+                player.getInventory().getContents().clone(),
+                player.getInventory().getArmorContents().clone(),
+                player.getInventory().getItemInOffHand().clone(),
+                player.getGameMode()
+        );
+    }
+
+    private void restoreSnapshot(@NotNull Player player, @Nullable RaceParticipant.PlayerSnapshot snapshot) {
+        if (snapshot == null) {
+            player.getInventory().clear();
+            player.setGameMode(GameMode.SURVIVAL);
+            return;
+        }
+        player.getInventory().setContents(snapshot.getInventoryContents());
+        player.getInventory().setArmorContents(snapshot.getArmorContents());
+        player.getInventory().setItemInOffHand(snapshot.getOffHand());
+        player.setGameMode(snapshot.getGameMode());
+    }
+
     @Override
     public void leave(@NotNull Player player) {
         RaceParticipant participant = participants.remove(player.getUniqueId());
@@ -232,7 +259,7 @@ public final class LuckyBlockRaceModule implements XEventModule {
             return;
         }
         finishOrder.remove(player.getUniqueId());
-        player.setGameMode(GameMode.SURVIVAL);
+        restoreSnapshot(player, participant.getSnapshot());
 
         if (participant.hasLane() && participant.getLaneIndex() < lanes.size()) {
             lanes.get(participant.getLaneIndex()).release();
@@ -359,29 +386,32 @@ public final class LuckyBlockRaceModule implements XEventModule {
         player.getInventory().addItem(createStartItem());
     }
 
-    private void scheduleStartItemWatcher() {
-        Bukkit.getScheduler().runTaskTimer(context.asPlugin(), task -> {
-            if (phase != RacePhase.RACING) {
-                task.cancel();
-                return;
+private void scheduleStartItemWatcher() {
+        startItemWatcherTask = new org.bukkit.scheduler.BukkitRunnable() {
+            @Override
+            public void run() {
+                if (phase != RacePhase.RACING) {
+                    this.cancel();
+                    return;
+                }
+                for (RaceParticipant participant : participants.values()) {
+                    if (!participant.hasLane() || participant.isFinished()) {
+                        continue;
+                    }
+                    Player player = Bukkit.getPlayer(participant.getPlayerId());
+                    if (player == null) {
+                        continue;
+                    }
+                    if (!player.getInventory().contains(settings.getStartItemMaterial())) {
+                        giveStartItem(player);
+                    }
+                }
             }
-            for (RaceParticipant participant : participants.values()) {
-                if (!participant.hasLane() || participant.isFinished()) {
-                    continue;
-                }
-                Player player = Bukkit.getPlayer(participant.getPlayerId());
-                if (player == null) {
-                    continue;
-                }
-                if (!player.getInventory().contains(settings.getStartItemMaterial())) {
-                    giveStartItem(player);
-                }
-            }
-        }, 40L, 40L);
+        }.runTaskTimer(context.asPlugin(), 40L, 40L);
     }
 
     private void scheduleMaxDurationTimeout() {
-        Bukkit.getScheduler().runTaskLater(context.asPlugin(), () -> {
+        maxDurationTask = Bukkit.getScheduler().runTaskLater(context.asPlugin(), () -> {
             if (phase == RacePhase.RACING) {
                 Bukkit.broadcast(messages.get("luckyblockrace.announce.time-up"));
                 concludeRacingPhase();
@@ -405,10 +435,12 @@ public final class LuckyBlockRaceModule implements XEventModule {
 
     private void endRaceImmediately() {
         cancelActiveTask();
+        cancelSecondaryTasks();
         for (UUID id : new ArrayList<>(participants.keySet())) {
             Player player = Bukkit.getPlayer(id);
+            RaceParticipant participant = participants.get(id);
             if (player != null) {
-                player.setGameMode(GameMode.SURVIVAL);
+                restoreSnapshot(player, participant != null ? participant.getSnapshot() : null);
             }
         }
         for (RaceLane lane : lanes) {
@@ -427,6 +459,17 @@ public final class LuckyBlockRaceModule implements XEventModule {
         if (activeTask != null) {
             activeTask.cancel();
             activeTask = null;
+        }
+    }
+
+    private void cancelSecondaryTasks() {
+        if (maxDurationTask != null) {
+            maxDurationTask.cancel();
+            maxDurationTask = null;
+        }
+        if (startItemWatcherTask != null) {
+            startItemWatcherTask.cancel();
+            startItemWatcherTask = null;
         }
     }
 
@@ -458,8 +501,18 @@ public final class LuckyBlockRaceModule implements XEventModule {
             return;
         }
         LuckyBlockOutcome outcome = outcomePool.rollRandom();
-        Vector direction = lane != null ? lane.getDirection() : new Vector(0, 0, 0);
-        outcomeExecutor.apply(outcome, player, block.getLocation(), () -> direction);
+        final RaceLane finalLane = lane;
+        outcomeExecutor.apply(outcome, player, block.getLocation(), new OutcomeExecutor.RaceDirectionProvider() {
+            @Override
+            public @NotNull Vector getRaceDirection() {
+                return finalLane != null ? finalLane.getDirection() : new Vector(0, 0, 0);
+            }
+
+            @Override
+            public Location getFinish() {
+                return finalLane != null ? finalLane.getFinish() : null;
+            }
+        });
     }
 
     public void handlePlayerMove(@NotNull Player player, @NotNull Location to) {

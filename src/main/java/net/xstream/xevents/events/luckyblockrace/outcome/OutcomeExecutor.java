@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.logging.Logger;
 
-
 public final class OutcomeExecutor {
 
     private final MessageService messages;
@@ -38,8 +37,8 @@ public final class OutcomeExecutor {
             case BLOCK_EFFECT -> applyBlockEffect(blockLocation);
             case TELEPORT_BACK -> teleportAlongPath(player, directionProvider, -outcome.getTeleportBlocks());
             case TELEPORT_FORWARD -> teleportAlongPath(player, directionProvider, outcome.getTeleportBlocks());
-            case COSMETIC -> {  }
-            case NOTHING -> {  }
+            case COSMETIC -> {}
+            case NOTHING -> {}
         }
 
         playSound(outcome, blockLocation);
@@ -79,8 +78,6 @@ public final class OutcomeExecutor {
         var tnt = world.spawn(location.clone().add(0.5, 0.5, 0.5), org.bukkit.entity.TNTPrimed.class);
         tnt.setFuseTicks(40);
         tnt.setSource(null);
-        
-        
         tnt.setYield(outcome.isTntBreaksBlocks() ? (float) Math.max(0.0, outcome.getTntPower()) : 0f);
     }
 
@@ -92,8 +89,6 @@ public final class OutcomeExecutor {
         if (outcome.isLightningDamaging()) {
             world.strikeLightning(location);
         } else {
-            
-            
             world.strikeLightningEffect(location);
         }
     }
@@ -128,9 +123,6 @@ public final class OutcomeExecutor {
         if (world == null) {
             return;
         }
-        
-        
-        
         world.spawnParticle(org.bukkit.Particle.CLOUD, location.clone().add(0.5, 1, 0.5), 20, 0.5, 0.5, 0.5, 0.05);
     }
 
@@ -142,13 +134,34 @@ public final class OutcomeExecutor {
         direction = direction.normalize();
         Location destination = player.getLocation().add(direction.multiply(blocksSigned));
         destination.setY(player.getLocation().getY());
+
+        Location finish = directionProvider.getFinish();
+        if (blocksSigned > 0 && finish != null && finish.getWorld() != null
+                && finish.getWorld().equals(destination.getWorld())) {
+            double distancePlayerToFinish = horizontalDistance(player.getLocation(), finish);
+            double distanceDestinationToFinish = horizontalDistance(destination, finish);
+            if (distanceDestinationToFinish < 1.0 && distancePlayerToFinish > distanceDestinationToFinish) {
+                Vector towardsFinish = finish.toVector().subtract(player.getLocation().toVector());
+                towardsFinish.setY(0);
+                if (towardsFinish.lengthSquared() > 0) {
+                    towardsFinish = towardsFinish.normalize();
+                    double safeDistance = Math.max(0, distancePlayerToFinish - 1.0);
+                    destination = player.getLocation().clone().add(towardsFinish.multiply(safeDistance));
+                    destination.setY(player.getLocation().getY());
+                }
+            }
+        }
+
         player.teleport(destination);
     }
 
-    @SuppressWarnings("deprecation") 
-    
-    
-    
+    private double horizontalDistance(Location a, Location b) {
+        double dx = a.getX() - b.getX();
+        double dz = a.getZ() - b.getZ();
+        return Math.sqrt(dx * dx + dz * dz);
+    }
+
+    @SuppressWarnings({"deprecation", "removal"})
     private void playSound(LuckyBlockOutcome outcome, Location location) {
         if (outcome.getSoundKey() == null) {
             return;
@@ -172,8 +185,9 @@ public final class OutcomeExecutor {
         player.sendMessage(messages.getRaw(outcome.getDisplayMessageKey(), "player", player.getName()));
     }
 
-    
     public interface RaceDirectionProvider {
         @NotNull Vector getRaceDirection();
+
+        @org.jetbrains.annotations.Nullable Location getFinish();
     }
 }

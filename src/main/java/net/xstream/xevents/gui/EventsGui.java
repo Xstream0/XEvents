@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public final class EventsGui implements Listener {
 
     private static final String TITLE_KEY = "gui.title";
@@ -38,7 +37,7 @@ public final class EventsGui implements Listener {
 
         int slot = 10;
         for (XEventModule module : plugin.getEventManager().getModules()) {
-            if (slot > 16) break; 
+            if (slot > 16) break;
             inventory.setItem(slot, buildModuleItem(module));
             slot++;
         }
@@ -103,6 +102,10 @@ public final class EventsGui implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
+        if (!player.hasPermission("xevents.admin")) {
+            player.closeInventory();
+            return;
+        }
         ItemStack clicked = event.getCurrentItem();
         if (clicked == null) {
             return;
@@ -143,10 +146,12 @@ public final class EventsGui implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent event) {
-        
+        if (!(event.getInventory().getHolder() instanceof GuiHolder)) {
+            return;
+        }
+        org.bukkit.event.HandlerList.unregisterAll(this);
     }
 
-    
     private static final class GuiHolder implements org.bukkit.inventory.InventoryHolder {
         @Override
         public Inventory getInventory() {
